@@ -31,12 +31,16 @@ class SoftmaxCrossEntropy:
     """
 
     def forward(self, logits: np.ndarray, target: np.ndarray) -> float:
-        # TODO (M4):
-        # 1. subtract the row max from logits (stability trick)
-        # 2. softmax -> probabilities, cache them
-        # 3. loss = mean of -log(prob of the correct class)
-        raise NotImplementedError
+        shifted = logits - logits.max(axis=1, keepdims=True)   # stability: largest score becomes 0, exp() can't overflow
+        exp = np.exp(shifted)
+        self._probs = exp / exp.sum(axis=1, keepdims=True)      # softmax: each row sums to 1
+        self._target = target
+        batch = logits.shape[0]
+        correct = self._probs[np.arange(batch), target]         # prob given to the right class, one per row
+        return float(-np.mean(np.log(correct + 1e-12)))         # 1e-12 avoids log(0)
 
     def backward(self) -> np.ndarray:
-        # TODO (M4): (probs - one_hot(target)) / batch_size
-        raise NotImplementedError
+        batch = self._probs.shape[0]
+        grad = self._probs.copy()                     # copy: don't modify the cached probabilities
+        grad[np.arange(batch), self._target] -= 1.0   # probs - one_hot(target)
+        return grad / batch
