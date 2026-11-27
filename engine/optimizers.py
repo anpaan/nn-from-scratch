@@ -32,5 +32,13 @@ class Adam:
         self.t = 0
 
     def step(self):
-        # TODO (M5): see TASKS.md M5 for the formulas
-        raise NotImplementedError
+        self.t += 1
+        b1, b2 = self.beta1, self.beta2
+        for p, g, m, v in zip(self.params, self.grads, self.m, self.v):
+            m *= b1
+            m += (1 - b1) * g           # momentum: running mean of the gradient
+            v *= b2
+            v += (1 - b2) * g * g       # running mean of gradient^2 (how "loud" this parameter is)
+            m_hat = m / (1 - b1 ** self.t)   # bias correction: m and v start at 0
+            v_hat = v / (1 - b2 ** self.t)
+            p -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)   # IN PLACE, like SGD
