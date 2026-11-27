@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NN Playground</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Neural Network Playground</h1>
+      <p>A network written from scratch, training live in your browser.</p>
+    </header>
+    <main>
+      <section id="controls">
+        <!-- TODO (M8): dataset picker, learning rate, layers, activation, play/pause/reset -->
+      </section>
+      <section id="network">
+        <!-- TODO (M8): the network drawing (neurons + weighted connections) -->
+        <svg id="net-svg" width="480" height="360"></svg>
+      </section>
+      <section id="output">
+        <!-- TODO (M7): decision-boundary heatmap + data points -->
+        <canvas id="boundary" width="360" height="360"></canvas>
+        <!-- TODO (M8): loss chart -->
+        <canvas id="loss-chart" width="360" height="120"></canvas>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
