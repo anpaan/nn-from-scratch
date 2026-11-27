@@ -38,4 +38,17 @@ def load_mnist(path: str = "data/mnist.npz"):
     Download mnist.npz once (see TASKS.md M6), keep it in data/ (git-ignored).
     Return X_train (60000, 784) scaled to [0, 1], y_train, X_test, y_test.
     """
-    raise NotImplementedError
+    import os
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"{path} not found. Download it first:  python -m scripts.download_mnist"
+        )
+    with np.load(path) as d:
+        # images are uint8 0..255 with shape (N, 28, 28): flatten each to one row of 784
+        # and scale to [0, 1]. float32 halves the memory (60000*784 floats).
+        X_train = d["x_train"].reshape(-1, 784).astype(np.float32) / 255.0
+        X_test = d["x_test"].reshape(-1, 784).astype(np.float32) / 255.0
+        y_train = d["y_train"].astype(np.int64)
+        y_test = d["y_test"].astype(np.int64)
+    return X_train, y_train, X_test, y_test
