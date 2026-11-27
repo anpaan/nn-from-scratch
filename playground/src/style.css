@@ -26,3 +26,21 @@ canvas, svg { background: #fff; border: 1px solid #ddd; border-radius: 8px; }
 #controls button:hover { background: #f0f0f0; }
 #controls .hint { font-size: 12px; color: #888; margin: 0; }
 #status { font-variant-numeric: tabular-nums; }
+
+/* M9: draw a digit */
+#digits { margin-top: 40px; }
+#digits h2 { margin: 0 0 4px; }
+#digits .hint { font-size: 12px; color: #888; margin: 4px 0 16px; max-width: 640px; }
+.digits-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+#digit-canvas { background: #000; cursor: crosshair; touch-action: none; display: block; }
+#digit-preview { background: #000; image-rendering: pixelated; display: block; }
+#digit-clear {
+  margin-top: 8px; width: 280px; font: inherit; font-size: 14px; padding: 6px; cursor: pointer;
+  border: 1px solid #ccc; border-radius: 6px; background: #fff;
+}
+#digit-result { font-size: 18px; font-weight: 600; margin: 0 0 12px; min-height: 24px; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-variant-numeric: tabular-nums; }
+.bar-row .bar { width: 220px; height: 14px; background: #eee; border-radius: 3px; overflow: hidden; }
+.bar-row .fill { height: 100%; width: 0; background: #9bb5e8; transition: width 0.1s; }
+.bar-row .fill.best { background: rgb(60, 120, 235); }
+.bar-row .pct { width: 52px; font-size: 12px; color: #555; }

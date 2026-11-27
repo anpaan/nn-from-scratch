@@ -11,6 +11,7 @@ import { makeSpiral, makeCircles, makeXor, type Dataset } from "./data.ts";
 import { drawBoundary } from "./boundary.ts";
 import { NetworkView } from "./network-view.ts";
 import { drawLossChart } from "./loss-chart.ts";
+import { setupDigits } from "./digits.ts";
 
 // ---------- DOM ----------
 
@@ -137,3 +138,6 @@ ui.reset.addEventListener("click", () => {
 rebuild();
 setRunning(true);
 requestAnimationFrame(frame);
+
+// M9: the "draw a digit" section (independent from the training above)
+setupDigits();

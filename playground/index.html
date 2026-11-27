@@ -75,6 +75,27 @@
         <canvas id="loss-chart" width="360" height="120"></canvas>
       </section>
     </main>
+    <section id="digits">
+      <h2>Draw a digit</h2>
+      <p class="hint">
+        This network was trained in Python on 60,000 handwritten digits (MNIST, ~98% test accuracy),
+        then exported to JSON. It runs right here in your browser.
+      </p>
+      <div class="digits-row">
+        <div>
+          <canvas id="digit-canvas" width="280" height="280"></canvas>
+          <button id="digit-clear">Clear</button>
+        </div>
+        <div>
+          <canvas id="digit-preview" width="112" height="112"></canvas>
+          <p class="hint">What the network sees (28×28)</p>
+        </div>
+        <div>
+          <p id="digit-result"></p>
+          <div id="digit-bars"></div>
+        </div>
+      </div>
+    </section>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
