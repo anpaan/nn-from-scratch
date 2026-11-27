@@ -130,3 +130,20 @@ Ghép hai cái lại thì gradient cực gọn: `∂loss/∂z = p - one_hot(nhã
 | logits | điểm thô trước softmax |
 | optimizer | thuật toán cập nhật tham số (SGD, Adam) |
 | overfitting | học thuộc train, kém trên dữ liệu mới |
+
+## 11. Nhật ký thí nghiệm
+
+### M3: XOR (2026-11-27)
+
+Bản gốc `examples/xor.py` (`2 → 8 → Tanh → 2`, SGD lr 0.5): loss 0.8926 → 0.0010, đoán đúng `[0 1 1 0]`.
+
+| Thí nghiệm | Loss | Kết quả | Vì sao |
+|---|---|---|---|
+| Bỏ `Tanh()` | kẹt ở **0.6931** từ epoch 200 | đoán sai, gần như ngẫu nhiên | Linear chồng Linear vẫn là một hàm tuyến tính, chỉ vẽ được một đường thẳng. XOR không tách được bằng đường thẳng, nên mạng chọn đoán 50/50 cho mọi điểm. 0.6931 = ln 2 = −log(0.5). |
+| `lr = 5.0` | vọt lên 7.56 (epoch 200), rồi kẹt ~2.7 | đoán sai | Bước quá dài nên nhảy qua đáy. Weights phình to làm Tanh bão hoà ở ±1, gradient ≈ 0 (vanishing gradient), mạng kẹt luôn. |
+| `lr = 0.001` | giảm đều nhưng chậm, 0.89 → 0.70 | đoán sai | Đi đúng hướng nhưng bước quá ngắn, 2000 epoch chưa đủ. |
+
+**Rút ra:**
+- Activation (hàm phi tuyến) là thứ cho mạng khả năng vẽ ranh giới cong. Thiếu nó thì sâu bao nhiêu lớp cũng chỉ bằng một lớp.
+- Learning rate giống gain của bộ điều khiển PID: cao quá thì dao động hoặc bão hoà, thấp quá thì ì. Phải tuning.
+- Loss "đoán bừa" với k lớp là ln k (2 lớp: 0.6931, 3 lớp: 1.0986). Loss kẹt ở đúng con số này nghĩa là mạng chưa học được gì.
