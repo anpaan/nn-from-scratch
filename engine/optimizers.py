@@ -16,9 +16,8 @@ class SGD:
         self.lr = lr
 
     def step(self):
-        # TODO (M2): for each (p, g): update p in place.
-        # Careful: `p = p - ...` creates a NEW array and does nothing to the layer!
-        raise NotImplementedError
+        for p, g in zip(self.params, self.grads):
+            p -= self.lr * g    # IN PLACE: modifies the array the layer holds. Never `p = p - ...`
 
 
 class Adam:

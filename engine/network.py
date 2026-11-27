@@ -10,12 +10,14 @@ class Sequential:
         self.layers = list(layers)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        # TODO (M2): pass x through each layer in order
-        raise NotImplementedError
+        for layer in self.layers:
+            x = layer.forward(x)
+        return x
 
     def backward(self, grad: np.ndarray) -> np.ndarray:
-        # TODO (M2): pass grad through each layer in REVERSE order
-        raise NotImplementedError
+        for layer in reversed(self.layers):
+            grad = layer.backward(grad)
+        return grad
 
     def params(self) -> list[np.ndarray]:
         return [p for layer in self.layers for p in layer.params()]

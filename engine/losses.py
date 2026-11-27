@@ -12,13 +12,12 @@ class MSE:
     """Mean squared error, for regression: mean((pred - target)^2)."""
 
     def forward(self, pred: np.ndarray, target: np.ndarray) -> float:
-        # TODO (M2): cache pred and target, return the mean squared error
-        raise NotImplementedError
+        self._diff = pred - target              # cache: backward only needs the difference
+        return float(np.mean(self._diff ** 2))
 
     def backward(self) -> np.ndarray:
-        # TODO (M2): derivative of mean((p - t)^2) w.r.t. p
-        # Don't forget: "mean" divides by the number of elements.
-        raise NotImplementedError
+        # d/dp of mean((p - t)^2) = 2 * (p - t) / N, N = total number of elements
+        return 2.0 * self._diff / self._diff.size
 
 
 class SoftmaxCrossEntropy:
