@@ -48,18 +48,14 @@ class Linear(Layer):
         self._x = None  # cache of the input, needed in backward()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        # TODO (M1): save x in self._x, then return x @ W + b
-        raise NotImplementedError
+        self._x = x                      # cache: backward needs x to compute dW
+        return x @ self.W + self.b       # b (out,) broadcasts over the batch rows
 
     def backward(self, grad_out: np.ndarray) -> np.ndarray:
-        # TODO (M1): grad_out has shape (batch, out_features)
-        #   self.dW = ?   shape (in_features, out_features)
-        #   self.db = ?   shape (out_features,)
-        #   return  ?     shape (batch, in_features)  -> dLoss/dx
-        # Hint: check the shapes, there is only one way to make them fit.
-        # ⚠ Write INTO the existing arrays: self.dW[...] = ...  (not self.dW = ...)
-        #   The optimizer holds references to these exact arrays (see TASKS.md M2).
-        raise NotImplementedError
+        # grad_out: (batch, out). Write INTO the existing arrays (optimizer holds references).
+        self.dW[...] = self._x.T @ grad_out    # (in, batch) @ (batch, out) -> (in, out), summed over batch
+        self.db[...] = grad_out.sum(axis=0)    # (out,): b touches every sample, so add them up
+        return grad_out @ self.W.T             # (batch, out) @ (out, in) -> (batch, in), sent to previous layer
 
     def params(self):
         return [self.W, self.b]

@@ -31,12 +31,12 @@ class Sigmoid(Layer):
         self._out = None
 
     def forward(self, x):
-        # TODO (M1): compute and cache the output
-        raise NotImplementedError
+        self._out = 1.0 / (1.0 + np.exp(-x))
+        return self._out
 
     def backward(self, grad_out):
-        # TODO (M1): d sigmoid / dx = s * (1 - s), where s is the forward output
-        raise NotImplementedError
+        s = self._out
+        return grad_out * s * (1.0 - s)
 
 
 class Tanh(Layer):
@@ -46,9 +46,8 @@ class Tanh(Layer):
         self._out = None
 
     def forward(self, x):
-        # TODO (M1)
-        raise NotImplementedError
+        self._out = np.tanh(x)
+        return self._out
 
     def backward(self, grad_out):
-        # TODO (M1): d tanh / dx = 1 - tanh(x)^2
-        raise NotImplementedError
+        return grad_out * (1.0 - self._out ** 2)
