@@ -2,7 +2,7 @@
 // Uses Node's built-in test runner (no extra packages needed).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Linear, Tanh, ReLU, Sequential, SoftmaxCrossEntropy, SGD, type Matrix } from "./engine.ts";
+import { Linear, Tanh, ReLU, Sigmoid, Sequential, SoftmaxCrossEntropy, SGD, type Matrix } from "./engine.ts";
 import { makeSpiral } from "./data.ts";
 
 const EPS = 1e-5;
@@ -42,6 +42,16 @@ test("gradients of a full network match numerical gradients", () => {
   f();
   model.backward(lossFn.backward());
   const grads = model.grads().map((g) => g.map((row) => [...row])); // snapshot
+  model.params().forEach((p, k) => assertClose(grads[k], numericalGrad(f, p)));
+});
+
+test("Sigmoid gradients match numerical gradients", () => {
+  const model = new Sequential(new Linear(2, 5, 4), new Sigmoid(), new Linear(5, 3, 5));
+  const lossFn = new SoftmaxCrossEntropy();
+  const f = () => lossFn.forward(model.forward(x), y);
+  f();
+  model.backward(lossFn.backward());
+  const grads = model.grads().map((g) => g.map((row) => [...row]));
   model.params().forEach((p, k) => assertClose(grads[k], numericalGrad(f, p)));
 });
 

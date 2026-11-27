@@ -13,17 +13,65 @@
     </header>
     <main>
       <section id="controls">
-        <!-- TODO (M8): dataset picker, learning rate, layers, activation, play/pause/reset -->
+        <label>Dataset
+          <select id="dataset">
+            <option value="spiral" selected>Spiral (3 classes)</option>
+            <option value="circles">Circles</option>
+            <option value="xor">XOR</option>
+          </select>
+        </label>
+        <label>Learning rate
+          <select id="lr">
+            <option>0.001</option>
+            <option>0.01</option>
+            <option>0.03</option>
+            <option>0.1</option>
+            <option selected>0.3</option>
+            <option>1</option>
+            <option>3</option>
+          </select>
+        </label>
+        <label>Hidden layers
+          <select id="layers">
+            <option>0</option>
+            <option>1</option>
+            <option selected>2</option>
+            <option>3</option>
+            <option>4</option>
+          </select>
+        </label>
+        <label>Neurons per layer
+          <select id="neurons">
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>6</option>
+            <option selected>8</option>
+          </select>
+        </label>
+        <label>Activation
+          <select id="activation">
+            <option value="tanh" selected>Tanh</option>
+            <option value="relu">ReLU</option>
+            <option value="sigmoid">Sigmoid</option>
+          </select>
+        </label>
+        <div class="buttons">
+          <button id="play">⏸ Pause</button>
+          <button id="reset">↺ Reset</button>
+        </div>
+        <p class="hint">Changing any setting resets the network and starts training again.</p>
       </section>
       <section id="network">
-        <!-- TODO (M8): the network drawing (neurons + weighted connections) -->
+        <!-- M8: neurons + connections; thickness = |weight|, blue = positive, orange = negative -->
         <svg id="net-svg" width="480" height="360"></svg>
       </section>
       <section id="output">
-        <!-- M7: decision-boundary heatmap + data points (pick dataset with ?data=spiral|circles|xor) -->
+        <!-- M7: decision-boundary heatmap + data points -->
         <canvas id="boundary" width="360" height="360"></canvas>
         <p id="status"></p>
-        <!-- TODO (M8): loss chart -->
+        <!-- M8: loss chart -->
         <canvas id="loss-chart" width="360" height="120"></canvas>
       </section>
     </main>

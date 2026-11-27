@@ -1,95 +1,80 @@
 // Entry point of the playground UI.
 //
 // The core idea is a loop driven by requestAnimationFrame (about 60 times/s):
-//   each frame: run a few training steps -> redraw the decision boundary
+//   each frame: run a few training steps -> redraw boundary, network, loss chart
 // That's what makes the training look "live".
 //
-// M7: pick the dataset with the URL, e.g.  ?data=spiral  ?data=circles  ?data=xor
-// (real controls come in M8).
+// M8: the controls on the left rebuild the network; changing any setting resets training.
 
-import { Sequential, Linear, Tanh, SoftmaxCrossEntropy, SGD, softmax, type Matrix } from "./engine.ts";
+import { Sequential, Linear, Tanh, ReLU, Sigmoid, SoftmaxCrossEntropy, SGD, type Layer } from "./engine.ts";
 import { makeSpiral, makeCircles, makeXor, type Dataset } from "./data.ts";
+import { drawBoundary } from "./boundary.ts";
+import { NetworkView } from "./network-view.ts";
+import { drawLossChart } from "./loss-chart.ts";
 
-// ---------- setup ----------
+// ---------- DOM ----------
 
-const datasets: Record<string, () => Dataset> = {
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const ui = {
+  dataset: $<HTMLSelectElement>("dataset"),
+  lr: $<HTMLSelectElement>("lr"),
+  layers: $<HTMLSelectElement>("layers"),
+  neurons: $<HTMLSelectElement>("neurons"),
+  activation: $<HTMLSelectElement>("activation"),
+  play: $<HTMLButtonElement>("play"),
+  reset: $<HTMLButtonElement>("reset"),
+  boundary: $<HTMLCanvasElement>("boundary"),
+  lossChart: $<HTMLCanvasElement>("loss-chart"),
+  status: $<HTMLParagraphElement>("status"),
+};
+const netView = new NetworkView(document.getElementById("net-svg") as unknown as SVGSVGElement);
+
+// ---------- training state ----------
+
+const DATASETS: Record<string, () => Dataset> = {
   spiral: () => makeSpiral(),
   circles: () => makeCircles(),
   xor: () => makeXor(),
 };
-const name = new URLSearchParams(location.search).get("data") ?? "spiral";
-const data = (datasets[name] ?? datasets.spiral)();
+const ACTIVATIONS: Record<string, () => Layer> = {
+  tanh: () => new Tanh(),
+  relu: () => new ReLU(),
+  sigmoid: () => new Sigmoid(),
+};
 
-const model = new Sequential(
-  new Linear(2, 16, 1), new Tanh(),
-  new Linear(16, 16, 2), new Tanh(),
-  new Linear(16, data.nClasses, 3),
-);
+const STEPS_PER_FRAME = 2;   // training steps between two redraws
+const MAX_EPOCHS = 5000;     // auto-pause afterwards so the page doesn't burn CPU forever
+
+let data: Dataset;
+let model: Sequential;
+let opt: SGD;
 const lossFn = new SoftmaxCrossEntropy();
-const opt = new SGD(model.params(), model.grads(), 0.3);
-
-const STEPS_PER_FRAME = 2; // training steps between two redraws (higher = faster, less "live")
-const MAX_EPOCHS = 4000;   // stop afterwards so the page doesn't burn CPU forever
 let epoch = 0;
 let loss = 0;
+let lossHistory: number[] = [];
+let running = true;
 
-// ---------- drawing ----------
+/** (Re)build dataset, network and optimizer from the current control values. */
+function rebuild() {
+  data = (DATASETS[ui.dataset.value] ?? DATASETS.spiral)();
+  const nLayers = Number(ui.layers.value);
+  const nNeurons = Number(ui.neurons.value);
+  const sizes = [2, ...Array<number>(nLayers).fill(nNeurons), data.nClasses];
 
-const canvas = document.querySelector<HTMLCanvasElement>("#boundary")!;
-const ctx = canvas.getContext("2d")!;
-const status = document.querySelector<HTMLParagraphElement>("#status")!;
-
-const RANGE = 1.5;  // the canvas shows x and y in [-RANGE, RANGE]
-const CELLS = 60;   // heatmap resolution: CELLS x CELLS squares
-const COLORS: [number, number, number][] = [
-  [235, 120, 60],  // class 0: orange
-  [60, 120, 235],  // class 1: blue
-  [60, 175, 90],   // class 2: green
-];
-
-// Grid of points at the centre of each heatmap cell, built once.
-const grid: Matrix = [];
-for (let r = 0; r < CELLS; r++) {
-  for (let c = 0; c < CELLS; c++) {
-    grid.push([
-      -RANGE + ((c + 0.5) / CELLS) * 2 * RANGE,
-      RANGE - ((r + 0.5) / CELLS) * 2 * RANGE, // canvas y grows downwards
-    ]);
+  const layers: Layer[] = [];
+  const seed = Math.floor(Math.random() * 1e9); // new random init on every reset
+  for (let l = 0; l < sizes.length - 1; l++) {
+    layers.push(new Linear(sizes[l], sizes[l + 1], seed + l));
+    if (l < sizes.length - 2) layers.push(ACTIVATIONS[ui.activation.value]()); // no activation after the last Linear
   }
-}
+  model = new Sequential(...layers);
+  opt = new SGD(model.params(), model.grads(), Number(ui.lr.value));
 
-function toPixel(x: number, y: number): [number, number] {
-  return [((x + RANGE) / (2 * RANGE)) * canvas.width, ((RANGE - y) / (2 * RANGE)) * canvas.height];
-}
-
-function draw() {
-  // 1. heatmap: ask the network about every grid point, mix class colours by probability
-  const probs = softmax(model.forward(grid));
-  const cw = canvas.width / CELLS, ch = canvas.height / CELLS;
-  probs.forEach((p, k) => {
-    let r = 0, g = 0, b = 0;
-    p.forEach((pk, cls) => {
-      r += pk * COLORS[cls][0];
-      g += pk * COLORS[cls][1];
-      b += pk * COLORS[cls][2];
-    });
-    // blend with white so the data points stay readable
-    ctx.fillStyle = `rgb(${(r + 255) / 2}, ${(g + 255) / 2}, ${(b + 255) / 2})`;
-    const row = Math.floor(k / CELLS), col = k % CELLS;
-    ctx.fillRect(col * cw, row * ch, cw + 1, ch + 1);
-  });
-
-  // 2. data points on top
-  data.X.forEach(([x, y], i) => {
-    const [px, py] = toPixel(x, y);
-    const [cr, cg, cb] = COLORS[data.y[i]];
-    ctx.beginPath();
-    ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
-    ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
-    ctx.fill();
-    ctx.strokeStyle = "white";
-    ctx.stroke();
-  });
+  epoch = 0;
+  loss = 0;
+  lossHistory = [];
+  netView.build(model, sizes);
+  draw();
 }
 
 function accuracy(): number {
@@ -101,19 +86,54 @@ function accuracy(): number {
   return ok / data.y.length;
 }
 
+function draw() {
+  drawBoundary(ui.boundary, model, data);
+  netView.update();
+  drawLossChart(ui.lossChart, lossHistory);
+  ui.status.textContent =
+    `epoch ${epoch}  |  loss ${loss.toFixed(4)}  |  acc ${(accuracy() * 100).toFixed(1)}%` +
+    (epoch >= MAX_EPOCHS ? "  (max epochs reached)" : "");
+}
+
+function setRunning(on: boolean) {
+  running = on;
+  ui.play.textContent = on ? "⏸ Pause" : "▶ Play";
+}
+
 // ---------- the live loop ----------
 
 function frame() {
-  for (let s = 0; s < STEPS_PER_FRAME && epoch < MAX_EPOCHS; s++) {
-    loss = lossFn.forward(model.forward(data.X), data.y); // 1-2. forward + loss
-    model.backward(lossFn.backward());                    // 3. backward
-    opt.step();                                           // 4. update
-    epoch++;
+  if (running) {
+    for (let s = 0; s < STEPS_PER_FRAME && epoch < MAX_EPOCHS; s++) {
+      loss = lossFn.forward(model.forward(data.X), data.y); // 1-2. forward + loss
+      model.backward(lossFn.backward());                    // 3. backward
+      opt.step();                                           // 4. update
+      epoch++;
+    }
+    lossHistory.push(loss);
+    if (epoch >= MAX_EPOCHS) setRunning(false);
+    draw();
   }
-  draw();
-  const done = epoch >= MAX_EPOCHS ? "  (done)" : "";
-  status.textContent =
-    `${name}  |  epoch ${epoch}  |  loss ${loss.toFixed(4)}  |  acc ${(accuracy() * 100).toFixed(1)}%${done}`;
-  if (epoch < MAX_EPOCHS) requestAnimationFrame(frame);
+  requestAnimationFrame(frame);
 }
+
+// ---------- wire up the controls ----------
+
+for (const el of [ui.dataset, ui.lr, ui.layers, ui.neurons, ui.activation]) {
+  el.addEventListener("change", () => {
+    rebuild();
+    setRunning(true); // "change a setting -> the network resets and learns again"
+  });
+}
+ui.play.addEventListener("click", () => {
+  if (epoch >= MAX_EPOCHS) rebuild();
+  setRunning(!running);
+});
+ui.reset.addEventListener("click", () => {
+  rebuild();
+  setRunning(true);
+});
+
+rebuild();
+setRunning(true);
 requestAnimationFrame(frame);

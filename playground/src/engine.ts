@@ -118,6 +118,19 @@ export class Tanh implements Layer {
   grads(): Matrix[] { return []; }
 }
 
+export class Sigmoid implements Layer {
+  private out: Matrix = [];
+  forward(x: Matrix): Matrix {
+    this.out = x.map((row) => row.map((v) => 1 / (1 + Math.exp(-v))));
+    return this.out;
+  }
+  backward(gradOut: Matrix): Matrix {
+    return gradOut.map((row, i) => row.map((g, j) => g * this.out[i][j] * (1 - this.out[i][j])));
+  }
+  params(): Matrix[] { return []; }
+  grads(): Matrix[] { return []; }
+}
+
 export class ReLU implements Layer {
   private x: Matrix = [];
   forward(x: Matrix): Matrix {
