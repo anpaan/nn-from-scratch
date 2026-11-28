@@ -25,7 +25,8 @@ canvas, svg { background: #fff; border: 1px solid #ddd; border-radius: 8px; }
 }
 #controls button:hover { background: #f0f0f0; }
 #controls .hint { font-size: 12px; color: #888; margin: 0; }
-#status { font-variant-numeric: tabular-nums; }
+#status { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 14px; }
+header a { margin-left: 8px; color: rgb(60, 120, 235); }
 
 /* M9: draw a digit */
 #digits { margin-top: 40px; }

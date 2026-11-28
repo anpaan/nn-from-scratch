@@ -93,7 +93,7 @@ function draw() {
   drawLossChart(ui.lossChart, lossHistory);
   ui.status.textContent =
     `epoch ${epoch}  |  loss ${loss.toFixed(4)}  |  acc ${(accuracy() * 100).toFixed(1)}%` +
-    (epoch >= MAX_EPOCHS ? "  (max epochs reached)" : "");
+    (epoch >= MAX_EPOCHS ? "  |  done" : "");
 }
 
 function setRunning(on: boolean) {
